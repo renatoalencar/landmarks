@@ -15,10 +15,14 @@ CAMLprim value caml_highres_clock(value unit)
     int64_t v;
     v = __rdtsc();
     return caml_copy_int64(v);
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
     uint32_t hi = 0, lo = 0;
     __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
     return caml_copy_int64( ((int64_t)lo)|( ((int64_t)hi)<<32 ));
+#elif defined(__aarch64__)
+    uint64_t v;
+    asm volatile ("mrs %0, cntvct_el0" : "=r"(v));
+    return caml_copy_int64(v);
 #else
     return 0;
 #endif
